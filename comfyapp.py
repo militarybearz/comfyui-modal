@@ -6,16 +6,20 @@ import uuid
 import os
 import modal
 
-_NODE_DIR = os.path.dirname(os.path.abspath(__file__))
-if _NODE_DIR not in sys.path:
-    sys.path.insert(0, _NODE_DIR)
+# Also add the node directory
+_NOD_DIR = os.path.dirname(os.path.abspath(__file__))
+if _NOD_DIR not in sys.path:
+    sys.path.insert(0, _NOD_DIR)
 
-from workflow_inputs import stage_remote_input_images
+# Import workflow_inputs lazily when needed
+def _get_stage_remote_input_images():
+    from workflow_inputs import stage_remote_input_images
+    return stage_remote_input_images
 
 # Bump this version whenever comfyapp.py changes.
 # The custom node compares this against the last deployed version
 # and re-runs `modal deploy` only when the version changes.
-COMFYAPP_VERSION = "2.0.2"
+COMFYAPP_VERSION = "2.0.6"
 
 APP_NAME = "comfyui"
 VOLUME_NAME = "comfyui-models"
@@ -351,6 +355,7 @@ class _ComfyAPIMixin:
         import urllib.request
         import urllib.error
         from pathlib import Path
+        stage_remote_input_images = _get_stage_remote_input_images()
 
         if input_images:
             stage_remote_input_images(
