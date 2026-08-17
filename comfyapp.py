@@ -19,7 +19,7 @@ def _get_stage_remote_input_images():
 # Bump this version whenever comfyapp.py changes.
 # The custom node compares this against the last deployed version
 # and re-runs `modal deploy` only when the version changes.
-COMFYAPP_VERSION = "2.0.15"
+COMFYAPP_VERSION = "2.0.16"
 
 APP_NAME = "comfyui"
 VOLUME_NAME = "comfyui-models"
@@ -378,6 +378,7 @@ class _ComfyAPIMixin:
         import urllib.error
         from pathlib import Path
         import base64
+        import os
         
         # Stage input images if provided
         if input_images:
@@ -395,10 +396,22 @@ class _ComfyAPIMixin:
                     destination = input_dir / remote_reference
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     destination.write_bytes(image_data)
-                    print(f"[comfyui-modal] Staged input image: {destination}")
+                    print(f"[comfyui-modal] Staged input image: {destination} (size: {len(image_data)} bytes)")
+                    # Verify file exists and is readable
+                    if destination.exists():
+                        stat = destination.stat()
+                        print(f"[comfyui-modal] Verified: {destination} size={stat.st_size} readable={os.access(destination, os.R_OK)}")
+                    else:
+                        print(f"[comfyui-modal] ERROR: File not created: {destination}")
                 except Exception as e:
                     print(f"[comfyui-modal] Warning: failed to stage input image {remote_reference}: {e}")
-
+                    import traceback
+                    traceback.print_exc()
+        
+        # Also verify input directory contents
+        input_dir = Path("/root/comfy/ComfyUI/input")
+        print(f"[comfyui-modal] Input directory contents: {[f.name for f in input_dir.iterdir() if f.is_file()]}")
+        
         client_id = str(uuid.uuid4())
         payload = json.dumps({"prompt": workflow, "client_id": client_id}).encode()
 
