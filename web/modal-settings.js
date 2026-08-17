@@ -515,7 +515,39 @@ function renderModelList(data) {
         }
       };
 
+      // Placeholder button (⬇L) - creates local zero-byte placeholder for ComfyUI dropdowns
+      const placeholderBtn = document.createElement("button");
+      placeholderBtn.textContent = "\u2b07L";
+      placeholderBtn.title = `Create local placeholder for ${file.name} (for ComfyUI dropdowns)`;
+      placeholderBtn.style.cssText = `
+        background: transparent; border: 1px solid #555; color: #7ed321;
+        width: 32px; height: 20px; border-radius: 3px; cursor: pointer;
+        font-size: 10px; flex-shrink: 0; line-height: 1;
+        display: flex; align-items: center; justify-content: center;
+        margin-left: 4px;
+      `;
+      placeholderBtn.onclick = async () => {
+        placeholderBtn.disabled = true;
+        placeholderBtn.textContent = "\u2026";
+        try {
+          const resp = await api.fetchApi(`${MODAL_PREFIX}/placeholder/${file.folder ?? folder}/${encodeURIComponent(file.name)}`, { method: "POST" });
+          const result = await resp.json();
+          if (result.status === "ok") {
+            showToast("Placeholder created", "success");
+          } else {
+            alert(`Failed: ${result.message}`);
+            placeholderBtn.disabled = false;
+            placeholderBtn.textContent = "\u2b07L";
+          }
+        } catch (e) {
+          alert(`Error: ${e.message}`);
+          placeholderBtn.disabled = false;
+          placeholderBtn.textContent = "\u2b07L";
+        }
+      };
+
       row.appendChild(delBtn);
+      row.appendChild(placeholderBtn);
       section.appendChild(row);
     }
 

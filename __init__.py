@@ -624,6 +624,39 @@ if _server:
         except Exception as e:
             return web.json_response({"status": "error", "message": str(e)}, status=500)
 
+    @_server.routes.post("/comfymodal/placeholder/{folder}/{filename}")
+    async def modal_create_placeholder(request: web.Request) -> web.Response:
+        """Create a zero-byte placeholder file locally for ComfyUI dropdowns."""
+        folder = request.match_info.get("folder", "")
+        filename = request.match_info.get("filename", "")
+        if not folder or not filename:
+            return web.json_response({"status": "error", "message": "folder and filename required"}, status=400)
+        
+        safe_folder = os.path.basename(folder)
+        safe_filename = os.path.basename(filename)
+        
+        # Ensure the file is a model file (has extension)
+        if not (safe_filename.endswith((".safetensors", ".pt", ".pth", ".bin", ".ckpt", ".gguf", ".onnx"))):
+            safe_filename += ".safetensors"
+        
+        placeholder_name = f"modal-{safe_filename}"
+        models_root = os.path.join(_COMFYUI_ROOT, "models")
+        folder_path = os.path.join(models_root, safe_folder)
+        placeholder_path = os.path.join(folder_path, placeholder_name)
+        
+        try:
+            os.makedirs(folder_path, exist_ok=True)
+            with open(placeholder_path, "wb") as f:
+                f.write(b"")  # zero-byte file
+            
+            return web.json_response({
+                "status": "ok", 
+                "message": f"Placeholder created: {safe_folder}/{placeholder_name}",
+                "path": placeholder_path
+            })
+        except Exception as e:
+            return web.json_response({"status": "error", "message": str(e)}, status=500)
+
     @_server.routes.get("/comfymodal/sync/status")
     async def modal_sync_status(request: web.Request) -> web.Response:
         """Get sync status: compare local models/custom_nodes with remote volumes."""

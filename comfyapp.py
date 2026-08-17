@@ -113,6 +113,15 @@ def download_model_to_volume(url: str, filename: str, save_path: str = "checkpoi
                     sys.stdout.flush()
 
     vol.commit()
+    # Create local placeholder file for ComfyUI dropdowns
+    try:
+        placeholder_name = f"modal-{filename}"
+        placeholder_path = Path(MODELS_PATH) / save_path / placeholder_name
+        placeholder_path.parent.mkdir(parents=True, exist_ok=True)
+        placeholder_path.write_bytes(b"")
+    except Exception as e:
+        print(f"[comfyui-modal] Warning: failed to create placeholder: {e}")
+    
     return {"status": "ok", "path": str(dest)}
 
 
