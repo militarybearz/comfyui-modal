@@ -373,7 +373,7 @@ async def _execute_job(item: tuple, item_id: int):
         _finish_job(task_key, prompt_id, outputs, success=False)
         return
 
-    output_dir = os.path.join(_COMFYUI_ROOT, "output")
+    output_dir = folder_paths.get_output_directory()
     os.makedirs(output_dir, exist_ok=True)
 
     for img in result.get("images", []):
