@@ -19,7 +19,7 @@ def _get_stage_remote_input_images():
 # Bump this version whenever comfyapp.py changes.
 # The custom node compares this against the last deployed version
 # and re-runs `modal deploy` only when the version changes.
-COMFYAPP_VERSION = "2.0.8"
+COMFYAPP_VERSION = "2.0.9"
 
 APP_NAME = "comfyui"
 VOLUME_NAME = "comfyui-models"
@@ -42,9 +42,13 @@ image = (
         "libxext6",
         "ffmpeg",
     )
-    .pip_install("comfy-cli==1.16.0")
+    .pip_install("comfy-cli==1.16.0", "modal")
     .run_commands(
         "comfy --skip-prompt install --nvidia",
+        gpu="a10g",
+    )
+    .run_commands(
+        "rm -rf /root/comfy/ComfyUI/custom_nodes/ComfyUI-Manager",
         gpu="a10g",
     )
     .add_local_python_source("workflow_inputs")
