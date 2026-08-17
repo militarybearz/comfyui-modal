@@ -19,7 +19,7 @@ def _get_stage_remote_input_images():
 # Bump this version whenever comfyapp.py changes.
 # The custom node compares this against the last deployed version
 # and re-runs `modal deploy` only when the version changes.
-COMFYAPP_VERSION = "2.0.13"
+COMFYAPP_VERSION = "2.0.14"
 
 APP_NAME = "comfyui"
 VOLUME_NAME = "comfyui-models"
@@ -47,10 +47,6 @@ image = (
         "comfy --skip-prompt install --nvidia --skip-manager",
         gpu="a10g",
     )
-    .run_commands(
-        "rm -rf /root/comfy/ComfyUI/custom_nodes/ComfyUI-Manager",
-        gpu="a10g",
-    )
     .add_local_python_source("workflow_inputs")
 )
 
@@ -76,6 +72,16 @@ custom_nodes_vol = modal.Volume.from_name(CUSTOM_NODES_VOLUME_NAME, create_if_mi
 )
 @modal.web_server(COMFYUI_PORT, startup_timeout=300)
 def ui():
+    import subprocess
+    import shutil
+    import os
+    
+    # Remove ComfyUI-Manager at runtime before launch (prevents segfault on v0.33)
+    manager_path = "/root/comfy/ComfyUI/custom_nodes/ComfyUI-Manager"
+    if os.path.exists(manager_path):
+        shutil.rmtree(manager_path, ignore_errors=True)
+        print(f"[comfyui-modal] Removed ComfyUI-Manager: {manager_path}")
+    
     subprocess.Popen(
         f"comfy launch -- --listen 0.0.0.0 --port {COMFYUI_PORT}",
         shell=True,
@@ -370,13 +376,27 @@ class _ComfyAPIMixin:
         import urllib.request
         import urllib.error
         from pathlib import Path
-        stage_remote_input_images = _get_stage_remote_input_images()
-
+        import base64
+        
+        # Stage input images if provided
         if input_images:
-            stage_remote_input_images(
-                Path("/root/comfy/ComfyUI/input"),
-                input_images,
-            )
+            input_dir = Path("/root/comfy/ComfyUI/input")
+            input_dir.mkdir(parents=True, exist_ok=True)
+            for remote_reference, encoded_bytes in input_images.items():
+                try:
+                    # Handle both base64 and raw bytes
+                    if isinstance(encoded_bytes, str):
+                        image_data = base64.b64decode(encoded_bytes)
+                    else:
+                        image_data = encoded_bytes
+                    
+                    # Save with the exact filename from the workflow
+                    destination = input_dir / remote_reference
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    destination.write_bytes(image_data)
+                    print(f"[comfyui-modal] Staged input image: {destination}")
+                except Exception as e:
+                    print(f"[comfyui-modal] Warning: failed to stage input image {remote_reference}: {e}")
 
         client_id = str(uuid.uuid4())
         payload = json.dumps({"prompt": workflow, "client_id": client_id}).encode()
