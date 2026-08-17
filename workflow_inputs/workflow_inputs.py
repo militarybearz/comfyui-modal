@@ -82,10 +82,23 @@ def _resolve_local_reference(
     stripped_reference, preferred_directory = _split_annotation(raw_reference)
     relative_path = _safe_relative_path(stripped_reference)
 
-    for directory_name in _search_directories(preferred_directory):
-        candidate = comfyui_root / directory_name / relative_path
-        if candidate.is_file():
-            return relative_path.as_posix(), candidate
+    # Search directories to check
+    search_dirs = _search_directories(preferred_directory)
+    
+    for directory_name in search_dirs:
+        search_root = comfyui_root / directory_name
+        if not search_root.exists():
+            continue
+        # Recursively search for the file
+        for candidate in search_root.rglob(relative_path.name):
+            if candidate.is_file():
+                # Return relative path from search_root for remote reference
+                try:
+                    remote_relative = candidate.relative_to(search_root)
+                except ValueError:
+                    remote_relative = relative_path
+                return remote_relative.as_posix(), candidate
+    
     return None
 
 
