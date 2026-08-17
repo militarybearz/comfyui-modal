@@ -19,7 +19,7 @@ def _get_stage_remote_input_images():
 # Bump this version whenever comfyapp.py changes.
 # The custom node compares this against the last deployed version
 # and re-runs `modal deploy` only when the version changes.
-COMFYAPP_VERSION = "2.0.16"
+COMFYAPP_VERSION = "2.0.17"
 
 APP_NAME = "comfyui"
 VOLUME_NAME = "comfyui-models"
@@ -563,8 +563,7 @@ class _ComfyAPIMixin:
     # Keep containers warm for 60s to avoid cold-start costs during iterative workflows
     scaledown_window=60,
     volumes={MODELS_PATH: vol, CUSTOM_NODES_PATH: custom_nodes_vol},
-    enable_memory_snapshot=True,
-    experimental_options={"enable_gpu_snapshot": True},
+    enable_memory_snapshot=False,
 )
 @modal.concurrent(max_inputs=4)
 class ComfyAPI(_ComfyAPIMixin):
@@ -580,8 +579,7 @@ class ComfyAPI(_ComfyAPIMixin):
     # Keep containers warm for 60s to avoid cold-start costs during iterative workflows
     scaledown_window=60,
     volumes={MODELS_PATH: vol, CUSTOM_NODES_PATH: custom_nodes_vol},
-    enable_memory_snapshot=True,
-    experimental_options={"enable_gpu_snapshot": True},
+    enable_memory_snapshot=False,
 )
 @modal.concurrent(max_inputs=4)
 class ComfyAPI_A100(_ComfyAPIMixin):
@@ -597,8 +595,7 @@ class ComfyAPI_A100(_ComfyAPIMixin):
     # Keep containers warm for 60s to avoid cold-start costs during iterative workflows
     scaledown_window=60,
     volumes={MODELS_PATH: vol, CUSTOM_NODES_PATH: custom_nodes_vol},
-    enable_memory_snapshot=True,
-    experimental_options={"enable_gpu_snapshot": True},
+    enable_memory_snapshot=False,
 )
 @modal.concurrent(max_inputs=4)
 class ComfyAPI_T4(_ComfyAPIMixin):
