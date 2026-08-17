@@ -19,7 +19,7 @@ def _get_stage_remote_input_images():
 # Bump this version whenever comfyapp.py changes.
 # The custom node compares this against the last deployed version
 # and re-runs `modal deploy` only when the version changes.
-COMFYAPP_VERSION = "2.0.12"
+COMFYAPP_VERSION = "2.0.13"
 
 APP_NAME = "comfyui"
 VOLUME_NAME = "comfyui-models"
@@ -117,9 +117,9 @@ def download_model_to_volume(url: str, filename: str, save_path: str = "checkpoi
                     sys.stdout.flush()
 
     vol.commit()
-    # Create local placeholder file for ComfyUI dropdowns
+    # Create local placeholder file for ComfyUI dropdowns (same name as model in volume)
     try:
-        placeholder_name = f"modal-{filename}"
+        placeholder_name = filename
         placeholder_path = Path(MODELS_PATH) / save_path / placeholder_name
         placeholder_path.parent.mkdir(parents=True, exist_ok=True)
         # Create minimal valid safetensors file: 8 bytes header length = 0 (little-endian)

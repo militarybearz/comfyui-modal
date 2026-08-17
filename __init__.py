@@ -639,7 +639,8 @@ if _server:
         if not (safe_filename.endswith((".safetensors", ".pt", ".pth", ".bin", ".ckpt", ".gguf", ".onnx"))):
             safe_filename += ".safetensors"
         
-        placeholder_name = f"modal-{safe_filename}"
+        # Use same name as model in volume (no modal- prefix)
+        placeholder_name = safe_filename
         models_root = os.path.join(_COMFYUI_ROOT, "models")
         folder_path = os.path.join(models_root, safe_folder)
         placeholder_path = os.path.join(folder_path, placeholder_name)
