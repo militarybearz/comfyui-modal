@@ -118,7 +118,9 @@ def download_model_to_volume(url: str, filename: str, save_path: str = "checkpoi
         placeholder_name = f"modal-{filename}"
         placeholder_path = Path(MODELS_PATH) / save_path / placeholder_name
         placeholder_path.parent.mkdir(parents=True, exist_ok=True)
-        placeholder_path.write_bytes(b"")
+        # Create minimal valid safetensors file: 8 bytes header length = 0 (little-endian)
+        # This prevents "struct.error: unpack requires a buffer of 8 bytes" when ComfyUI reads it
+        placeholder_path.write_bytes(b"\x00\x00\x00\x00\x00\x00\x00\x00")
     except Exception as e:
         print(f"[comfyui-modal] Warning: failed to create placeholder: {e}")
     

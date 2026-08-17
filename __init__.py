@@ -626,7 +626,7 @@ if _server:
 
     @_server.routes.post("/comfymodal/placeholder/{folder}/{filename}")
     async def modal_create_placeholder(request: web.Request) -> web.Response:
-        """Create a zero-byte placeholder file locally for ComfyUI dropdowns."""
+        """Create a minimal valid safetensors placeholder file locally for ComfyUI dropdowns."""
         folder = request.match_info.get("folder", "")
         filename = request.match_info.get("filename", "")
         if not folder or not filename:
@@ -646,8 +646,10 @@ if _server:
         
         try:
             os.makedirs(folder_path, exist_ok=True)
+            # Create minimal valid safetensors file: 8 bytes header length = 0 (little-endian)
+            # This prevents "struct.error: unpack requires a buffer of 8 bytes" when ComfyUI reads it
             with open(placeholder_path, "wb") as f:
-                f.write(b"")  # zero-byte file
+                f.write(b"\x00\x00\x00\x00\x00\x00\x00\x00")  # 8 zero bytes = empty header
             
             return web.json_response({
                 "status": "ok", 
