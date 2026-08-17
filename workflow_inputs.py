@@ -22,7 +22,7 @@ class PreparedWorkflowInputs:
 
 def prepare_local_workflow_inputs(
     workflow: dict[str, object],
-    comfyui_root: Path,
+    search_dirs: dict[str, Path],
 ) -> PreparedWorkflowInputs:
     prepared_workflow = copy.deepcopy(workflow)
     input_images: dict[str, str] = {}
@@ -47,7 +47,7 @@ def prepare_local_workflow_inputs(
             if raw_reference.startswith(("http://", "https://")):
                 continue
 
-            resolved = _resolve_local_reference(raw_reference, comfyui_root)
+            resolved = _resolve_local_reference(raw_reference, search_dirs)
             if resolved is None:
                 missing_files.append(raw_reference)
                 continue
@@ -77,18 +77,19 @@ def stage_remote_input_images(input_dir: Path, input_images: dict[str, str]) -> 
 
 def _resolve_local_reference(
     raw_reference: str,
-    comfyui_root: Path,
+    search_dirs: dict[str, Path],
 ) -> tuple[str, Path] | None:
     stripped_reference, preferred_directory = _split_annotation(raw_reference)
     relative_path = _safe_relative_path(stripped_reference)
 
-    # Search directories to check
-    search_dirs = _search_directories(preferred_directory)
-    
-    for directory_name in search_dirs:
-        search_root = comfyui_root / directory_name
-        if not search_root.exists():
+    # Order in which named directories are searched
+    directory_order = _search_directories(preferred_directory)
+
+    for directory_name in directory_order:
+        search_root = search_dirs.get(directory_name)
+        if search_root is None or not search_root.exists():
             continue
+
         # Recursively search for the file
         for candidate in search_root.rglob(relative_path.name):
             if candidate.is_file():
@@ -98,7 +99,7 @@ def _resolve_local_reference(
                 except ValueError:
                     remote_relative = relative_path
                 return remote_relative.as_posix(), candidate
-    
+
     return None
 
 

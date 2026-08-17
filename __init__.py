@@ -11,6 +11,7 @@ import subprocess
 import time
 from pathlib import Path
 from aiohttp import web
+import folder_paths
 
 _NODE_DIR = os.path.dirname(os.path.abspath(__file__))
 if _NODE_DIR not in sys.path:
@@ -353,7 +354,11 @@ async def _execute_job(item: tuple, item_id: int):
     try:
         prepared_inputs = prepare_local_workflow_inputs(
             workflow,
-            Path(_COMFYUI_ROOT),
+            {
+                "input": Path(folder_paths.get_input_directory()),
+                "output": Path(folder_paths.get_output_directory()),
+                "temp": Path(folder_paths.get_temp_directory()),
+            },
         )
         for missing_file in prepared_inputs.missing_files:
             print(f"[comfyui-modal] Warning: input image not found locally: {missing_file}")
