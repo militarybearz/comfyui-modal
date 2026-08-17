@@ -304,7 +304,7 @@ def upload_model_chunk(chunk_data: bytes, folder: str, filename: str, offset: in
 class _ComfyAPIMixin:
     """Shared implementation for all GPU-specific ComfyAPI classes."""
 
-    @modal.enter(snap=True)
+    @modal.enter(snap=False)
     def startup(self):
         import os
         import shutil
