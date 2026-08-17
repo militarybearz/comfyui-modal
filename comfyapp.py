@@ -19,7 +19,7 @@ def _get_stage_remote_input_images():
 # Bump this version whenever comfyapp.py changes.
 # The custom node compares this against the last deployed version
 # and re-runs `modal deploy` only when the version changes.
-COMFYAPP_VERSION = "2.0.14"
+COMFYAPP_VERSION = "2.0.15"
 
 APP_NAME = "comfyui"
 VOLUME_NAME = "comfyui-models"
@@ -68,6 +68,7 @@ custom_nodes_vol = modal.Volume.from_name(CUSTOM_NODES_VOLUME_NAME, create_if_mi
     timeout=3600,
     min_containers=0,
     scaledown_window=2,
+    enable_memory_snapshot=False,
     volumes={MODELS_PATH: vol, CUSTOM_NODES_PATH: custom_nodes_vol},
 )
 @modal.web_server(COMFYUI_PORT, startup_timeout=300)
